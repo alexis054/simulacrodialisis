@@ -1,0 +1,180 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Simulador de Parcialito · Hemodiálisis</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: columna única de 820px, tarjeta de pregunta centrada, barra de estado arriba y navegación abajo */
+:root{--bg:#f2f5fb;--card:#fff;--tx:#1a2236;--mut:#657089;--bd:#dfe5f1;--pri:#5b52f0;--ok:#15803d;--okb:#dcfce7;--ko:#b91c1c;--kob:#fee2e2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1322;--card:#18203a;--tx:#e8ecf8;--mut:#9aa6c4;--bd:#2a3558;--ok:#4ade80;--okb:#12351f;--ko:#f87171;--kob:#3c1a1f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1322;--card:#18203a;--tx:#e8ecf8;--mut:#9aa6c4;--bd:#2a3558;--ok:#4ade80;--okb:#12351f;--ko:#f87171;--kob:#3c1a1f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;justify-content:space-between;align-items:center;max-width:820px;margin:0 auto;padding:14px 0}
+header b{font-size:1.1rem}
+main{max-width:820px;margin:0 auto;min-width:0}
+button,select{font:inherit;color:inherit;cursor:pointer}
+button{background:var(--card);border:2px solid var(--bd);border-radius:14px;padding:12px 18px;font-weight:600;transition:.15s}
+button:hover:not(:disabled){border-color:var(--pri);transform:translateY(-1px)}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+button.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+#th{padding:8px 12px;border-radius:50%}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:24px;box-shadow:0 4px 20px #0000000d;margin-bottom:16px}
+h1{margin:0 0 8px;font-size:1.6rem}
+h2{margin:12px 0 18px;font-size:1.25rem;line-height:1.45;overflow-wrap:anywhere}
+.mut{color:var(--mut)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--bd)}
+select{background:var(--bg);border:2px solid var(--bd);border-radius:10px;padding:8px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--pri)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-weight:600;margin-bottom:8px}
+.stats b{margin-right:auto}
+.g{color:var(--ok)}.r{color:var(--ko)}
+.bar{height:8px;background:var(--bd);border-radius:9px;overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;background:var(--pri);transition:width .3s}
+.badge{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:3px 12px;font-size:.8rem;color:var(--mut)}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:14px 16px}
+.opt span{min-width:0;overflow-wrap:anywhere}
+.opt b{flex:none;width:34px;height:34px;border-radius:10px;background:var(--bg);display:grid;place-items:center}
+.opt.ok{background:var(--okb);border-color:var(--ok);opacity:1}
+.opt.bad{background:var(--kob);border-color:var(--ko);opacity:1}
+.opt.dim{opacity:.55}
+.fb{margin-top:16px;padding:12px 16px;border-radius:12px;font-weight:600}
+.fb.ok{background:var(--okb);color:var(--ok)}
+.fb.bad{background:var(--kob);color:var(--ko)}
+details{margin-top:12px;border:1px solid var(--bd);border-radius:12px;padding:10px 16px;background:var(--bg)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:8px 0 0}
+nav,.btns{display:flex;gap:10px;flex-wrap:wrap}
+nav .pri{margin-left:auto}
+.big{font-size:3.4rem;font-weight:800;color:var(--pri);line-height:1.1}
+.miss{border:1px solid var(--bd);border-left:5px solid var(--ko);border-radius:12px;padding:12px 16px;margin:10px 0;background:var(--bg)}
+.miss small{display:block;margin-top:6px;color:var(--mut)}
+.btns{margin-top:20px}
+@media(prefers-reduced-motion:reduce){button,.bar i{transition:none}}
+@media(max-width:520px){.card{padding:16px}.row{flex-direction:column;align-items:flex-start}nav button{flex:1}}
+</style>
+<header><b>🩺 Simulador · Hemodiálisis</b><button id="th" title="Cambiar tema">🌓</button></header>
+<main id="app"></main>
+<script>
+// Formato: [N.º, frecuencia (de 7), enunciado, índice correcto, justificación, opciones (omitir en V/F: 0 = Verdadero, 1 = Falso)]
+const Q=[
+[1,5,"El sistema de ósmosis inversa para el tratamiento de agua para diálisis es un sistema de filtrado que permite eliminar moléculas y sales inorgánicas con una eficiencia del 99%. ¿Cuál de las siguientes afirmaciones NO es un requerimiento de este sistema de filtrado?",1,"Para implementar una ósmosis inversa y lograr que el agua atraviese las membranas es necesario aplicar altas presiones.",["Bombas de alta presión.","Bombas de baja presión.","Agua de entrada con nivel de dureza bajo.","Agua de entrada libre de cloro."]],
+[2,5,"La presión transmembrana (TMP) en un filtro dializador depende de la tasa de fluido a transferir.",0,"La TMP depende tanto del KUF como de la Tasa de UF."],
+[3,4,"Los filtros de alto flujo de las máquinas de diálisis se utilizan principalmente en equipos volumétricos.",0,"Los filtros de alto flujo poseen un KUF mayor a 20 y poro de 3 nm; tienen mejor cribado y se usan principalmente en equipos volumétricos."],
+[4,4,"En máquinas de diálisis, los filtros de alto flujo tienen membranas con poros de 1 nm.",1,"Los filtros de alto flujo tienen membranas con poros de 3 nm."],
+[5,4,"En relación al circuito extracorpóreo de un sistema de hemodiálisis (1-Punción arterial, 2-Sensor PArt, 3-Bomba de sangre, 4-Hemodializador, 5-Sensor PVen, 6-Bureta venosa, 7-Sensor de nivel de sangre y detector de burbujas, 8-Clamp venoso, 9-Punción venosa), ¿cuál de las siguientes afirmaciones NO es correcta?",1,"Si la presión en el punto 5 supera el valor límite, el sistema DETIENE el equipo (no permite que siga funcionando).",["En el punto 6 se encuentra la bureta venosa, la cual se utiliza para evitar que vaya aire hacia el paciente y sufra una embolia gaseosa.","El sensor en el punto 5 puede mostrar aumento de presión porque el paciente tiene una estenosis en la devolución del acceso vascular. Si la presión registrada en este punto está por encima de un determinado valor, el sistema permite que la máquina siga funcionando pero se activa una alarma sonora y visual.","En el punto 2 el sensor mide presión negativa cerca de la bomba.","El clamp venoso del punto 8 se activa cuando se detecta presencia de aire en la bureta del punto 6 o cuando cae la presión venosa del punto 5 por debajo de valores límites."]],
+[6,4,"Respecto al tratamiento del agua para diálisis, ¿cuál de las siguientes opciones NO corresponde con el uso común de las resinas?",3,"El cloro se elimina con carbón activado por adsorción, no por intercambio de resinas.",["Ablandar el agua: se elimina calcio y magnesio.","Eliminar hierro.","Eliminar nitratos.","Eliminar cloro."]],
+[7,3,"Los requisitos que cumple el agua potable son insuficientes para diálisis. La misma presenta sustancias que no son contaminantes para el consumo, pero sí para dializar. Por este motivo no se puede usar agua potable para realizar diálisis bajo ningún punto de vista.",1,"El agua potable puede usarse en casos puntuales (falla renal aguda, fallas transitorias del sistema de tratamiento), a criterio médico."],
+[8,3,"Respecto a los principios de funcionamiento de la hemodiálisis, ¿el mecanismo de difusión en una membrana semipermeable NO depende de cuál de las siguientes opciones?",1,"La difusión depende del área, la diferencia de concentración, el espesor de membrana y la temperatura; el volumen transferido es propio de la convección.",["Área de intercambio.","Volumen de fluido que se transfiere.","Temperatura de los fluidos.","Espesor de la membrana.","Diferencia de concentración."]],
+[9,3,"El agua en exceso que trae el paciente se elimina por acción de la cámara de balances.",1,"Se elimina por la presión transmembrana, generada fundamentalmente por la bomba de ultrafiltración."],
+[10,3,"¿Cuál de las siguientes opciones NO es una variable controlable en un equipo de hemodiálisis?",3,"El clearence es resultado de ajustar velocidades de sangre/dializado; no se controla en forma directa.",["Volumen de agua a eliminar.","Flujo de sangre.","Concentraciones de sodio y bicarbonato.","Clearence.","Flujo del dializado.","Temperatura."]],
+[11,3,"El primer paso del tratamiento de agua para una máquina de hemodiálisis es utilizar filtros de ósmosis inversa para eliminar elementos como el sodio y el potasio.",1,"Los filtros de ósmosis inversa se usan al final (poros muy pequeños); primero van filtros de poro grande y de adsorción (carbón activado) que protegen la membrana de OI."],
+[12,3,"El coeficiente de cribado (S) determina el desempeño del filtro, donde el filtrado se obtiene de acuerdo al tamaño de los solutos.",0,"S≈1 para moléculas pequeñas (pasan sin dificultad) y S≈0 para moléculas grandes (peso molecular mayor)."],
+[13,3,"Otro de los mecanismos presentes en los filtros dializadores es el de adsorción. Las características de la superficie de la membrana hacen que algunas toxinas se adhieran a las paredes del filtro.",0,""],
+[14,3,"La diálisis busca la eliminación de toxinas a través de una membrana. De un lado de la membrana está expuesta la sangre y del otro se coloca un líquido especial (dializado).",0,"Se eliminan toxinas, agua e iones en exceso; a veces se aportan sustancias como glucosa."],
+[15,3,"A medida que el flujo de sangre (ml/min) en el filtro de una máquina de diálisis aumenta, el clearence disminuye.",1,"Si el flujo de sangre aumenta, el clearence también aumenta."],
+[16,3,"Respecto a los filtros para hemodiálisis, ¿cuál de las siguientes opciones NO corresponde a una característica de los dializadores?",3,"La diferencia de concentración es una variable del proceso de difusión, no una característica intrínseca de la membrana.",["Flujo contracorriente.","Clearence.","Punto de cut off.","Diferencia de concentración.","Coeficiente de cribado."]],
+[17,3,"Mediante el uso de un filtro de diálisis se logra también reemplazar las funciones hormonales del riñón.",1,"Solo se sustituyen algunas funciones (eliminar agua e iones); debe complementarse con eritropoyetina y vitamina D activada."],
+[18,2,"En un filtro de diálisis todas sus fibras reciben la misma cantidad de sangre y dializado.",1,"La probabilidad de una distribución perfectamente homogénea entre fibras es muy baja."],
+[19,2,"En el pasaje de solutos por el principio de convección/ultrafiltración en hemodiálisis, el volumen de solución que se transfiere afecta el flujo de solutos.",0,"El flujo por convección depende del volumen transferido, la concentración del soluto y el coeficiente de cribado."],
+[20,2,"El clearence de los dializadores es la capacidad de transferir una cierta cantidad de fluido a través de la membrana.",1,"El clearence cuantifica la capacidad de limpieza (depuración), no la transferencia de fluido."],
+[21,2,"En el circuito extracorpóreo de una máquina de diálisis, el detector de burbujas se coloca antes del filtro de diálisis.",1,"El sensor de nivel/detector de burbujas se ubica después del hemodializador."],
+[22,2,"En el sistema de control por flujos de un equipo de hemodiálisis hay dos bombas. Una está ubicada antes del filtro de diálisis y es la encargada de impulsar todo el circuito más la mezcla. La otra bomba se ubica del lado que recibe el dializado sucio, después del filtro.",0,"La diferencia de funcionamiento entre ambas bombas genera la presión negativa que produce la TMP necesaria para dializar."],
+[23,2,"El líquido de diálisis (dializado) tiene una composición idéntica a la sangre en la mayoría de sus componentes.",1,"Es similar mas no idéntica: no contiene elementos formes ni proteínas; su componente principal es agua ultra pura."],
+[24,2,"La presión de transmembrana (TMP) como característica de los filtros de diálisis se puede definir como la presión necesaria para transferir líquido desde el paciente al dializado a través de la membrana.",0,""],
+[25,2,"Cuando la diferencia de concentraciones se debe a la presencia de proteínas se denomina presión oncótica. Esto no afecta el proceso de diálisis ya que las proteínas son moléculas grandes que favorecen la eliminación de agua del paciente.",1,"La presión oncótica favorece el paso de agua del dializado hacia el paciente (efecto contrario al deseado); se contrarresta con presión hidrostática transmembrana."],
+[26,2,"El proceso de diálisis intenta imitar el funcionamiento del nefrón y para ello se reemplaza la función renal con un filtro construido en base a una membrana semipermeable biocompatible. Una de las dificultades que se presentan es la complicación para imitar el proceso de reabsorción.",0,"El dializador no reemplaza completamente la función fisiológica; solo el trasplante renal lo consigue."],
+[27,2,"En un filtro dializador el coeficiente de ultrafiltración (KUF) depende del tamaño de poro.",0,"El KUF depende del espesor de la membrana y del tamaño del poro."],
+[28,2,"La cantidad de agua a eliminar del paciente en diálisis se calcula como la diferencia entre el peso seco y el peso con el cual llega el paciente al centro de diálisis.",0,""],
+[29,2,"En máquinas de diálisis, los filtros de bajo flujo tienen un coeficiente de ultrafiltración (KUF) menor a 20.",0,"Los filtros de baja eficiencia tienen KUF&lt;20, poro de 1 nm y sirven para cualquier tipo de equipo."],
+[30,2,"En un filtro dializador la presión transmembrana (TMP) depende del coeficiente de ultrafiltración (KUF).",0,"La relación TMP-KUF es inversamente proporcional para una tasa de UF fija."],
+[31,2,"Dentro del filtro dializador los fluidos circulan en contracorriente a fin de incrementar el tiempo de intercambio.",1,"El objetivo del flujo en contracorriente es maximizar el gradiente de concentración (y con ello la difusión), no «incrementar el tiempo de intercambio»."],
+[32,2,"En la eliminación de toxinas por difusión en hemodiálisis, el área de intercambio de la membrana no afecta el flujo de solutos.",1,"Según la Ley de Fick, el área de intercambio sí afecta el flujo de solutos por difusión."],
+[33,2,"En el sistema de cámara de balance de una máquina de diálisis, la bomba de ultrafiltración se utiliza para controlar que a la salida del filtro se obtenga el mismo volumen que se envió al mismo.",1,"La bomba de UF es una bomba de precisión, en paralelo a la cámara de balances, que extrae un volumen fijo por ciclo para llevar al paciente a su peso seco (no iguala entrada/salida)."],
+[34,2,"Los principales dispositivos que se colocan para el tratamiento de agua para una máquina de diálisis son: los que eliminan componentes por filtrado (detienen las partículas) y los que eliminan componentes por intercambio (cambian una sustancia del agua por otra), por captura (atrapan las partículas) o por adsorción.",0,""],
+[35,1,"El tipo de tratamiento del agua para diálisis mediante intercambio ocurre, por ejemplo, en los sistemas que eliminan dureza en el agua. En este caso, se retira calcio y magnesio y se agrega sodio, es decir, se cambia una sustancia por otra. La captura o adsorción se utiliza para eliminar el cloro. Para ello se utiliza carbón activado, al cual se adhiere el cloro que está en el agua.",0,""],
+[39,1,"En relación a los principios de funcionamiento de la hemodiálisis, ¿el mecanismo de convección por ultrafiltración en una membrana semipermeable NO depende de cuál de las siguientes opciones?",1,"⚠️ Respuesta inferida (no confirmada explícitamente en la fuente): el flujo por convección depende del volumen transferido, la concentración del soluto y el coeficiente de cribado, por lo que el espesor de la membrana sería la opción no incluida. Se recomienda confirmar con el docente.",["Concentración del soluto.","Espesor de la membrana.","Volumen de fluido que se transfiere.","Coeficiente de cribado."]]
+];
+
+const $=s=>document.querySelector(s),app=$('#app'),L='ABCDEF';
+let cfg={min:1,sq:false,so:false},S=null,tm=null;
+const fmt=s=>String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+function home(){
+  clearInterval(tm);S=null;
+  const n=m=>Q.filter(r=>r[1]>=m).length;
+  const opts=[[5,'5 de 7 fuentes'],[4,'4 de 7 o más'],[3,'3 de 7 o más'],[2,'2 de 7 o más'],[1,'Todas']];
+  app.innerHTML=`<section class="card"><h1>Parcialito de Hemodiálisis</h1>
+  <p class="mut">${Q.length} preguntas consolidadas de 7 fuentes. Se omitieron 3 sin clave de respuesta confiable (N.º 36, 37 y 38). Atajos: 1–6 para responder, ← → para navegar.</p>
+  <label class="row">Frecuencia mínima de aparición
+    <select id="mn">${opts.map(o=>`<option value="${o[0]}" ${cfg.min==o[0]?'selected':''}>${o[1]} (${n(o[0])})</option>`).join('')}</select></label>
+  <label class="row">Mezclar preguntas (si no, van de mayor a menor frecuencia)<input type="checkbox" id="sq" ${cfg.sq?'checked':''}></label>
+  <label class="row">Mezclar opciones (solo opción múltiple)<input type="checkbox" id="so" ${cfg.so?'checked':''}></label>
+  <div class="btns"><button class="pri" data-a="start">▶ Comenzar</button></div></section>`;
+}
+
+function go(raw){
+  if(!raw){cfg.min=+$('#mn').value;cfg.sq=$('#sq').checked;cfg.so=$('#so').checked}
+  let l=raw||Q.filter(r=>r[1]>=cfg.min);
+  l=cfg.sq?shuffle([...l]):[...l].sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
+  S={l:l.map(r=>{const mc=!!r[5],o=mc?r[5]:['Verdadero','Falso'],ord=o.map((_,i)=>i);if(mc&&cfg.so)shuffle(ord);
+    return{r,n:r[0],f:r[1],q:r[2],c:r[3],j:r[4],o,ord,mc,a:null}}),i:0,t0:Date.now(),el:0};
+  clearInterval(tm);
+  tm=setInterval(()=>{S.el=(Date.now()-S.t0)/1000|0;const e=$('#tm');if(e)e.textContent=fmt(S.el)},1000);
+  quiz();
+}
+
+const feedback=q=>{const ok=q.a==q.c;
+  return `<div class="fb ${ok?'ok':'bad'}">${ok?'✅ ¡Correcto!':'❌ Incorrecto. La respuesta correcta es: <b>'+q.o[q.c]+'</b>'}</div>`+
+  (q.j?`<details open><summary>💡 Justificación</summary><p>${q.j}</p></details>`:'<p class="mut">Este ítem no trae justificación en el banco.</p>')};
+
+function quiz(){
+  const q=S.l[S.i],d=q.a!==null,last=S.i==S.l.length-1;
+  const ok=S.l.filter(x=>x.a!==null&&x.a==x.c).length,ko=S.l.filter(x=>x.a!==null&&x.a!=x.c).length,t=ok+ko;
+  app.innerHTML=`<div class="stats"><b>Pregunta ${S.i+1} de ${S.l.length}</b><span class="g">✔ ${ok}</span><span class="r">✖ ${ko}</span><span>🎯 ${t?Math.round(ok/t*100):0}%</span><span>⏱ <i id="tm" style="font-style:normal">${fmt(S.el)}</i></span></div>
+  <div class="bar"><i style="width:${(S.i+1)/S.l.length*100}%"></i></div>
+  <section class="card"><span class="badge">Pregunta N.º ${q.n} · aparece en ${q.f}/7 fuentes</span>
+  <h2>${q.q}</h2>
+  <div class="opts">${q.ord.map((k,p)=>`<button class="opt ${d?(k==q.c?'ok':k==q.a?'bad':'dim'):''}" data-k="${k}" ${d?'disabled':''}><b>${q.mc?L[p]:'VF'[p]}</b><span>${q.o[k]}</span></button>`).join('')}</div>
+  ${d?feedback(q):''}</section>
+  <nav><button data-a="menu">☰ Menú</button><button data-a="prev" ${S.i?'':'disabled'}>← Anterior</button><button class="pri" data-a="next">${last?'Finalizar ✔':'Siguiente →'}</button></nav>`;
+}
+
+function summary(){
+  clearInterval(tm);S.el=(Date.now()-S.t0)/1000|0;
+  const ok=S.l.filter(x=>x.a!==null&&x.a==x.c).length,bad=S.l.filter(x=>x.a!==null&&x.a!=x.c),na=S.l.filter(x=>x.a===null).length,pct=Math.round(ok/S.l.length*100);
+  S.fr=bad.map(x=>x.r);
+  app.innerHTML=`<section class="card"><h1>${pct>=60?'🎉':'💪'} Resumen final</h1><div class="big">${pct}%</div>
+  <p>${ok} aciertos · ${bad.length} errores${na?` · ${na} sin responder`:''} · ⏱ ${fmt(S.el)}</p>
+  <h3>Preguntas falladas</h3>
+  ${bad.length?bad.map(x=>`<div class="miss"><b>N.º ${x.n}.</b> ${x.q}<div class="r">Tu respuesta: ${x.o[x.a]}</div><div class="g">Correcta: ${x.o[x.c]}</div>${x.j?`<small>${x.j}</small>`:''}</div>`).join(''):'<p>¡Sin errores! 🏆</p>'}
+  <div class="btns">${bad.length?'<button class="pri" data-a="retry">🔁 Reintentar falladas</button>':''}<button data-a="restart">Repetir este set</button><button data-a="menu">☰ Menú</button></div></section>`;
+  scrollTo(0,0);
+}
+
+function ans(k){const q=S.l[S.i];if(q.a!==null)return;q.a=k;quiz()}
+const A={
+  start:()=>go(),
+  menu:home,
+  prev:()=>{if(S.i>0){S.i--;quiz()}},
+  next:()=>{if(S.i==S.l.length-1)summary();else{S.i++;quiz()}},
+  retry:()=>go(S.fr),
+  restart:()=>go(S.l.map(x=>x.r))
+};
+app.onclick=e=>{const b=e.target.closest('[data-k],[data-a]');if(!b)return;
+  if(b.dataset.k!==undefined)ans(+b.dataset.k);else A[b.dataset.a]()};
+onkeydown=e=>{if(!S||!$('.opt'))return;
+  if(e.key=='ArrowRight')A.next();else if(e.key=='ArrowLeft')A.prev();
+  else{const b=document.querySelectorAll('.opt')[+e.key-1];if(b)b.click()}};
+
+const root=document.documentElement;
+try{const t=localStorage.getItem('th');if(t)root.dataset.theme=t}catch(e){}
+$('#th').onclick=()=>{
+  const dark=root.dataset.theme?root.dataset.theme=='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+  const n=dark?'light':'dark';root.dataset.theme=n;try{localStorage.setItem('th',n)}catch(e){}
+};
+home();
+</script>
+
+</body></html>
